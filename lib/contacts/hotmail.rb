@@ -75,25 +75,22 @@ class Contacts
         resp, data = http.get(get_contact_list_url(index),
           "Cookie" => @cookies
         )
-
-        @contacts = @contacts + resp.body.scan(/([A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,4})/i)
+        
+        url_match_text_beginning = Regexp.escape("http://m.mail.live.com/?rru=compose&amp;to=")
+        url_match_text_end = Regexp.escape("&amp;")
+        @contacts = @contacts + resp.body.scan(/#{url_match_text_beginning}(.*)#{url_match_text_end}/)
        
-	if resp.body.include?("Next page")
-          go = true
-        else
-          go = false
-	end
-	index += 1
+        go = true if resp.body.include?("Next page")
+        index += 1
       end
       
       @contacts.each do |contact|
         contact = contact.to_a
-        contact[1] = contact[0]
+        contact[1] = CGI::unescape(contact[0])
         contact[0] = nil
       end
-      return @contacts 
-    end  
-
+      return @contacts
+    end
   end
  
   def get_contact_list_url(index) 
