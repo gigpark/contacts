@@ -1,7 +1,7 @@
 Gem::Specification.new do |s|
   s.name = "contacts"
-  s.version = "1.0.14"
-  s.date = "2009-05-06"
+  s.version = "1.0.15"
+  s.date = "2009-05-26"
   s.summary = "A universal interface to grab contact list information from various providers including Yahoo, Gmail, Hotmail, and Plaxo."
   s.email = "lucas@rufy.com"
   s.homepage = "http://github.com/cardmagic/contacts"
