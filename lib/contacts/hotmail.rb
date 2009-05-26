@@ -75,14 +75,14 @@ class Contacts
         resp, data = http.get(get_contact_list_url(index),
           "Cookie" => @cookies
         )
-        if resp.body.include?("Next page")
-          @contacts = @contacts + resp.body.scan(/([A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,4})/i)
+
+        @contacts = @contacts + resp.body.scan(/([A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,4})/i)
+       
+	if resp.body.include?("Next page")
           go = true
-        elsif !resp.body.include?("Next page") && !resp.body.include?("Previous page")
-	  @contacts = @contacts + resp.body.scan(/([A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,4})/i)
+        else
           go = false
 	end
-	
 	index += 1
       end
       
@@ -102,8 +102,6 @@ class Contacts
  
   private
     TYPES[:hotmail] = Hotmail
-  
-  
   
   end
 end
