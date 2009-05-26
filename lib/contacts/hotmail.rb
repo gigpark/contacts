@@ -3,7 +3,7 @@ class Contacts
     URL                 = "https://login.live.com/login.srf?id=2"
     OLD_CONTACT_LIST_URL = "http://%s/cgi-bin/addresses"
     NEW_CONTACT_LIST_URL = "http://%s/mail/GetContacts.aspx"
-    CONTACT_LIST_URL = "http://mobile.live.com/hm/contacts.aspx?bf=100&ts=1&c=to&cf=1%253bfolder.aspx%253ffolder%253d00000000-0000-0000-0000-000000000002&i=0" 
+    CONTACT_LIST_URL = "http://mpeople.live.com/default.aspx?pg=0" 
     COMPOSE_URL         = "http://%s/cgi-bin/compose?"
     PROTOCOL_ERROR      = "Hotmail has changed its protocols, please upgrade this library first. If that does not work, report this error at http://rubyforge.org/forum/?group_id=2693"
     PWDPAD = "IfYouAreReadingThisYouHaveTooMuchFreeTime"
@@ -67,21 +67,23 @@ class Contacts
       end
       @contacts = []
       go = true
-      page = 0
-      count_per_page = 20
+      index = 0
       while(go) do
         go = false
-        index = page * count_per_page
-        page += 1
         url = URI.parse(get_contact_list_url(index))
         http = open_http(url)
         resp, data = http.get(get_contact_list_url(index),
           "Cookie" => @cookies
         )
-        if resp.body.match(/([A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,4})/i)
+        if resp.body.include?("Next page")
           @contacts = @contacts + resp.body.scan(/([A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,4})/i)
           go = true
-        end
+        elsif !resp.body.include?("Next page") && !resp.body.include?("Previous page")
+	  @contacts = @contacts + resp.body.scan(/([A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,4})/i)
+          go = false
+	end
+	
+	index += 1
       end
       
       @contacts.each do |contact|
@@ -95,7 +97,7 @@ class Contacts
   end
  
   def get_contact_list_url(index) 
-    "http://mobile.live.com/hm/contacts.aspx?bf=100&ts=1&c=to&cf=1%253bfolder.aspx%253ffolder%253d00000000-0000-0000-0000-000000000002&i=#{index}"
+    "http://mpeople.live.com/default.aspx?pg=#{index}"
   end
  
   private

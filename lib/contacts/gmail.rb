@@ -1,4 +1,14 @@
-require "json/add/rails"
+begin
+  # If the json gem is available, use it
+  require "json/add/rails"
+rescue MissingSourceFile
+  # Otherwise wrap the ActiveSupport JSON implementation for our simple use case
+  class JSON
+    def self.parse(i)
+      ActiveSupport::JSON.decode(i)
+    end
+  end
+end
 
 class Contacts
   class Gmail < Base
@@ -28,8 +38,10 @@ class Contacts
       data, resp, cookies, forward, old_url = post(LOGIN_URL, postdata, cookie, LOGIN_REFERER_URL) + [LOGIN_URL]
       
       cookies = remove_cookie("GMAIL_LOGIN", cookies)
-      
+
       if data.index("Username and password do not match")
+        raise AuthenticationError, "Username and password do not match"
+      elsif data.index("The username or password you entered is incorrect")
         raise AuthenticationError, "Username and password do not match"
       elsif data.index("Required field must not be blank")
         raise AuthenticationError, "Login and password must not be blank"
