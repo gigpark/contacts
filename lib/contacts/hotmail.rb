@@ -66,6 +66,7 @@ class Contacts
         end
         
         @contacts = []
+        build_contacts = []
         go = true
         index = 0
         
@@ -75,18 +76,39 @@ class Contacts
           http = open_http(url)
           resp, data = http.get(get_contact_list_url(index), "Cookie" => @cookies)
           
-          url_match_text_beginning = Regexp.escape("http://m.mail.live.com/?rru=compose&amp;to=")
-          url_match_text_end = Regexp.escape("&amp;")
-          @contacts = @contacts + resp.body.scan(/#{url_match_text_beginning}(.*)#{url_match_text_end}/)
+          email_match_text_beginning = Regexp.escape("http://m.mail.live.com/?rru=compose&amp;to=")
+          email_match_text_end = Regexp.escape("&amp;")
+          
+          raw_html = resp.body.grep(/(?:e|dn)lk[0-9]+/)
+          raw_html.delete_at 0
+          raw_html.inject do |memo, row|
+            c_info = row.match(/(e|dn)lk([0-9])+/)
+            
+            # Same contact, or different?
+            build_contacts << [] if memo != c_info[2]
+            
+            # Grab info
+            case c_info[1]
+              when "e" # Email
+                build_contacts.last[1] = row.match(/#{email_match_text_beginning}(.*)#{email_match_text_end}/)[1]
+              when "dn" # Name
+                build_contacts.last[0] = row.match(/<a[^>]*>(.+)<\/a>/)[1]
+            end
+            
+            # Set memo to contact id
+            c_info[2]
+          end
           
           go = resp.body.include?("Next page")
           index += 1
         end
         
-        @contacts.each do |contact|
-          contact = contact.to_a
-          contact[1] = CGI::unescape(contact[0])
-          contact[0] = nil
+        build_contacts.each do |contact|
+          unless contact[1].nil?
+            # Only return contacts with email addresses
+            contact[1] = CGI::unescape(contact[1])
+            @contacts << contact
+          end
         end
         return @contacts
       end
