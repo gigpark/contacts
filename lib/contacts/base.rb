@@ -92,10 +92,14 @@ class Contacts
       http
     end
     
+    def cookie_hash_from_string(cookie_string)
+      cookie_string.split(";").map{|i|i.split("=", 2).map{|j|j.strip}}.inject({}){|h,i|h[i[0]]=i[1];h}
+    end
+    
     def parse_cookies(data, existing="")
       return existing if data.nil?
 
-      cookies = existing.split(";").map{|i|i.split("=", 2).map{|j|j.strip}}.inject({}){|h,i|h[i[0]]=i[1];h}
+      cookies = cookie_hash_from_string(existing)
       
       data.gsub!(/ ?[\w]+=EXPIRED;/,'')
       data.gsub!(/ ?expires=(.*?, .*?)[;,$]/i, ';')
